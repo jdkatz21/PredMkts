@@ -266,7 +266,7 @@ get_moments <- function(df) {
   df <- df %>%
     group_by(date, contract_preamble, expiry_date) %>%
     summarise(
-      mean_low     = sum(probability * strike, na.rm = TRUE) / sum(probability, na.rm = TRUE),
+      mean     = sum(probability * strike, na.rm = TRUE) / sum(probability, na.rm = TRUE),
       median   = weightedMedian(strike, w = probability, na.rm = TRUE, interpolate = FALSE),
       mode = fmode(strike, w = probability, na.rm = TRUE, ties='first'),
       variance = sum(probability * (strike - (sum(probability * strike) / sum(probability)))^2, na.rm = TRUE) / sum(probability, na.rm = TRUE),
