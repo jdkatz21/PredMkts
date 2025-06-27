@@ -348,7 +348,7 @@ write_csv(moments_df, 'kalshi_ffr_moments.csv')
 write_csv(df, 'kalshi_ffr_distributions.csv')
 
 
-animate_distribution_mov(df, contract = "FED-22MAR", start_date = "2022-01-01", end_date = "2022-03-31", output_file = "output/evolution_movs/ffr/distribution_evolution_mar22.mov", col_to_graph = 'pdf')
+animate_distribution_mov(df, contract = "FED-25MAY", start_date = "2022-01-01", end_date = "2025-06-19", output_file = "output/evolution_movs/ffr/distribution_evolution_may2025.mov", col_to_graph = 'pdf')
 
 # animate_distribution_mov(df, contract = "FED-22DEC", start_date = "2022-06-14", end_date = "2022-12-14", output_file = "output/evolution_movs/ffr/distribution_evolution_dec22.mov")
 # animate_distribution_mov(df, contract = "FED-25JAN", start_date = "2025-01-01", end_date = "2025-06-09", output_file = "output/evolution_movs/ffr/distribution_evolution_june25.mov")

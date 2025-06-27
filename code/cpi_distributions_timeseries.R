@@ -9,7 +9,7 @@ setwd('/Users/jaredkatz/Documents/Research/PredictionMarkets')
 # loads trade level data
 read_data <- function() {
   
-  df <- read_csv("data/payrolls_distributions.csv")
+  df <- read_csv("data/cpi_distributions.csv")
   
   # Convert datetime and extract date
   df <- df %>%
@@ -127,6 +127,20 @@ clean_data <- function(df) {
 # convert to probabilities
 convert_to_probabilities <- function(df) {
   
+  # Add low bins
+  all_cols <- names(df)
+  
+  # Create one row per unique contract_preamble/date/expiry_date combo
+  # new_rows <- df %>%
+  #   distinct(contract_preamble, date, expiry_date) %>%
+  #   mutate(strike = 0)
+  
+  new_rows <- df %>%
+    group_by(contract_preamble, date, expiry_date) %>%
+    summarise(strike = min(strike) - 0.1, .groups = "drop")
+  
+  df <- bind_rows(df, new_rows)
+  
   # Start with 99 on the left-most bin, then keep subtracting left minus right
   df <- df %>% group_by(contract_preamble, date) %>% arrange(strike) %>%
     mutate(probability = 
@@ -135,23 +149,21 @@ convert_to_probabilities <- function(df) {
                     ifelse(!is.na(lead(strike)), adjusted_yes_price - lead(adjusted_yes_price), adjusted_yes_price - 1)
              ))
   
+  
   # swap the probabilities
   swap_probabilities <- function(df_group) {
+    print(df_group$contract_preamble[1])
     # Ensure sorted order
     df_group <- df_group %>% arrange(strike) %>% mutate(swapped = FALSE)
     
-    # print(df_group)
     # Convert to regular data.frame to update values by reference
     
     nrows <- nrow(df_group) - 1
     
-    if (nrows >= 2) {
-      
+    if (nrows > 2) {
       for (i in 2:nrows) {
         
         # push the low end of the distribution towards the right
-        
-        
         if (
           df_group$adjusted_yes_price[i] > 50 &&
           df_group$probability[i] == 0 &&
@@ -179,27 +191,30 @@ convert_to_probabilities <- function(df) {
         
       }
       
-      
-      return(df_group)
     }
     
-    # Now apply to each group until 
-    still_need_to_swap <- TRUE
     
-    while(still_need_to_swap) {
-      
-      df <- df %>%
-        group_by(contract_preamble, date) %>%
-        group_split() %>%
-        map_dfr(swap_probabilities)
-      
-      print(df %>% filter(swapped == TRUE))
-      still_need_to_swap <- any(df$swapped)
-    }
-    
-      
+    return(df_group)
   }
+  
+  # Now apply to each group until 
+  still_need_to_swap <- TRUE
+  
+  while(still_need_to_swap) {
     
+    df <- df %>%
+      group_by(contract_preamble, date) %>%
+      group_split() %>%
+      map_dfr(swap_probabilities)
+    
+    print(df %>% filter(swapped == TRUE))
+    still_need_to_swap <- any(df$swapped)
+  }
+  
+  df <- df %>% group_by(contract_preamble, date) %>% 
+    filter(!any(probability == 98)) %>%
+    ungroup()
+  
   
   return(df)
   
@@ -268,9 +283,9 @@ df <- clean_data(df)
 df <- convert_to_probabilities(df)
 moments_df <- get_moments(df)
 
-write_csv(moments_df, 'kalshi_payrolls_moments.csv')
+write_csv(moments_df, 'kalshi_cpi_moments.csv')
 # 
-# animate_distribution_mov(df, contract = "KXCPIYOY-25JAN", start_date = "2024-06-14", end_date = "2025-02-28", output_file = "output/evolution_movs/cpi/Jan25_cdf.mov")
+animate_distribution_mov(df, contract = "KXCPIYOY-25MAY", start_date = "2024-06-14", end_date = "2025-06-28", output_file = "output/evolution_movs/cpi/Jun25_pdf.mov", col_to_graph = 'pdf')
 # animate_distribution_mov(df, contract = "KXCPIYOY-25JAN", start_date = "2024-06-14", end_date = "2025-02-28", output_file = "output/evolution_movs/cpi/Jan25_pdf.mov", col_to_graph = 'pdf')
 # 
 # animate_distribution_mov(df, contract = "KXCPIYOY-25FEB", start_date = "2024-06-14", end_date = "2025-03-28", output_file = "output/evolution_movs/cpi/Feb25_cdf.mov")
