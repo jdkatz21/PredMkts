@@ -269,6 +269,8 @@ get_moments <- function(df) {
       mean     = sum(probability * strike, na.rm = TRUE) / sum(probability, na.rm = TRUE),
       median   = weightedMedian(strike, w = probability, na.rm = TRUE, interpolate = FALSE),
       mode = fmode(strike, w = probability, na.rm = TRUE, ties='first'),
+      skewness = DescTools::Skew(strike, w = probability, na.rm = TRUE),
+      kurtosis = DescTools::Kurt(strike, w = probability, na.rm = TRUE),
       variance = sum(probability * (strike - (sum(probability * strike) / sum(probability)))^2, na.rm = TRUE) / sum(probability, na.rm = TRUE),
       .groups = "drop"
     )
