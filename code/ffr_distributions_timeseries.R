@@ -273,6 +273,21 @@ animate_distribution_mov <- function(df, contract, start_date, end_date, output_
 
 # return a new dataframe with the day and contract preamble and
 # mean, median, mode, variance, skewness, kurtosis
+weightedGMSkew <- function(x, w, na.rm = TRUE) {
+  if (na.rm) {
+    sel <- !is.na(x) & !is.na(w)
+    x <- x[sel]; w <- w[sel]
+  }
+  w <- w / sum(w)
+  mu <- sum(w * x)
+  # weighted median
+  ord <- order(x); x_o <- x[ord]; w_o <- w[ord]
+  cumw <- cumsum(w_o)
+  m_w <- x_o[min(which(cumw >= 0.5))]
+  mad <- sum(w * abs(x - m_w))
+  (mu - m_w) / mad
+}
+
 get_moments <- function(df) {
   
   df <- df %>%
@@ -281,7 +296,7 @@ get_moments <- function(df) {
         mean     = sum(probability * strike, na.rm = TRUE) / sum(probability, na.rm = TRUE),
         median   = weightedMedian(strike, w = probability, na.rm = TRUE, interpolate = FALSE),
         mode = fmode(strike, w = probability, na.rm = TRUE, ties='first'),
-        skewness = DescTools::Skew(strike, w = probability, na.rm = TRUE),
+        skewness = weightedGMSkew(strike, w = probability, na.rm = TRUE),
         kurtosis = DescTools::Kurt(strike, w = probability, na.rm = TRUE),
         variance = sum(probability * (strike - (sum(probability * strike) / sum(probability)))^2, na.rm = TRUE) / sum(probability, na.rm = TRUE),
         .groups = "drop"
